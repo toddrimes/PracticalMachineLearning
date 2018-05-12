@@ -1,0 +1,38 @@
+set.seed(12345)
+
+# INDIVIDUAL
+mod_lm <- train(classe ~ ., data = training, method = "rf", na.action = na.omit)
+mod_rf <- train(classe ~ ., data = training, method = "rf", na.action = na.omit)
+mod_gbm <- train(classe ~ ., data = training, method = "gbm", na.action = na.omit)
+mod_lda <- train(classe ~ ., data = training, method = "lda", na.action = na.omit)
+mod_svm <- svm(classe ~ ., data = training, na.action = na.omit)
+
+pred_lm <- predict(mod_lm, testing)
+pred_rf <- predict(mod_rf, testing)
+pred_gbm <- predict(mod_gbm, testing)
+pred_lda <- predict(mod_lda, testing)
+pred_svm <- predict(mod_svm, testing)
+
+confusionMatrix(pred_lm, testing$classe)$overall[1]
+confusionMatrix(pred_rf, testing$classe)$overall[1]
+confusionMatrix(pred_gbm, testing$classe)$overall[1]
+confusionMatrix(pred_lda, testing$classe)$overall[1]
+confusionMatrix(pred_svm, testing$classe)$overall[1]
+
+accuracy(pred_lm, testing$classe)
+accuracy(pred_rf, testing$classe)
+accuracy(pred_gbm, testing$classe)
+accuracy(pred_lda, testing$classe)
+accuracy(pred_svm, testing$classe)
+
+# STACKED
+predDF <- data.frame(pred_lm, pred_rf, pred_gbm, pred_lda, pred_svm, classe = testing$classe)
+combModFit <- train(classe ~ ., method = "rf", data = predDF)
+combPred <- predict(combModFit, predDF)
+
+# Accuracy among the test set samples where the two methods agree
+sum(pred_rf[predDF$pred_rf == predDF$pred_gbm] == 
+        predDF$classe[predDF$pred_rf == predDF$pred_gbm]) / 
+    sum(predDF$pred_rf == predDF$pred_gbm)
+
+accuracy(combPred, testing$classe)
